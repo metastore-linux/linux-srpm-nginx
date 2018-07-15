@@ -21,7 +21,7 @@
 Name:               nginx
 Epoch:              1
 Version:            1.15.1
-Release:            1%{?dist}
+Release:            2%{?dist}
 Summary:            A high performance web server and reverse proxy server
 Group:              System Environment/Daemons
 # BSD License (two clause)
@@ -46,6 +46,7 @@ Source210:          UPGRADE-NOTES-1.6-to-1.10
 Source900:          https://nginx.org/download/nginx-%{version}.tar.gz.asc
 # Module: brotli
 Source910:          ngx_brotli.tar.gz
+Source920:          00-server.default.conf
 
 # removes -Werror in upstream build scripts.  -Werror conflicts with
 # -D_FORTIFY_SOURCE=2 causing warnings to turn into errors.
@@ -223,6 +224,10 @@ Requires:           nginx
 %patch2 -p1
 cp %{SOURCE200} %{SOURCE210} %{SOURCE10} %{SOURCE12} .
 
+# METASTORE - [
+cp %{SOURCE920} .
+# ] - METASTORE
+
 %if 0%{?rhel} > 0 && 0%{?rhel} < 8
 sed -i -e 's#KillMode=.*#KillMode=process#g' nginx.service
 sed -i -e 's#PROFILE=SYSTEM#HIGH:!aNULL:!MD5#' nginx.conf
@@ -314,6 +319,10 @@ install -p -d -m 0755 %{buildroot}%{_unitdir}/nginx.service.d
 install -p -d -m 0755 %{buildroot}%{_sysconfdir}/nginx/conf.d
 install -p -d -m 0755 %{buildroot}%{_sysconfdir}/nginx/default.d
 
+# METASTORE - [
+install -p -d -m 0755 %{buildroot}%{_sysconfdir}/nginx/vhosts.d
+# ] - METASTORE
+
 install -p -d -m 0700 %{buildroot}%{_localstatedir}/lib/nginx
 install -p -d -m 0700 %{buildroot}%{_localstatedir}/lib/nginx/tmp
 install -p -d -m 0700 %{buildroot}%{_localstatedir}/log/nginx
@@ -330,6 +339,11 @@ install -p -m 0644 %{SOURCE101} %{SOURCE102} \
     %{buildroot}%{_datadir}/nginx/html
 install -p -m 0644 %{SOURCE103} %{SOURCE104} \
     %{buildroot}%{_datadir}/nginx/html
+
+# METASTORE - [
+install -p -m 0644 %{SOURCE920} \
+    %{buildroot}%{_sysconfdir}/nginx/vhosts.d
+# ] - METASTORE
 
 %if 0%{?with_mailcap_mimetypes}
 rm -f %{buildroot}%{_sysconfdir}/nginx/mime.types
@@ -368,6 +382,34 @@ exit 0
 
 %post
 %systemd_post nginx.service
+
+# METASTORE - [
+%define sslcert %{_sysconfdir}/pki/nginx/localhost.crt
+%define sslkey %{_sysconfdir}/pki/nginx/localhost.key
+
+if [ -f %{sslkey} -o -f %{sslcert} ]; then
+   exit 0
+fi
+
+%{_bindir}/openssl genrsa -rand /proc/apm:/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/pci:/proc/rtc:/proc/uptime 2048 > %{sslkey} 2> /dev/null
+
+FQDN=`hostname`
+if [ "x${FQDN}" = "x" -o ${#FQDN} -gt 59 ]; then
+   FQDN=localhost.localdomain
+fi
+
+cat << EOF | %{_bindir}/openssl req -new -key %{sslkey} \
+         -x509 -sha256 -days 365 -set_serial $RANDOM -extensions v3_req \
+         -out %{sslcert} 2>/dev/null
+--
+SomeState
+SomeCity
+SomeOrganization
+SomeOrganizationalUnit
+${FQDN}
+root@${FQDN}
+EOF
+# ] - METASTORE
 
 %post mod-http-geoip
 if [ $1 -eq 1 ]; then
@@ -447,6 +489,10 @@ fi
 %attr(770,%{nginx_user},root) %dir %{_localstatedir}/log/nginx
 %dir %{_libdir}/nginx/modules
 
+# METASTORE - [
+%config(noreplace) %{_sysconfdir}/nginx/vhosts.d/00-server.default.conf
+# ] - METASTORE
+
 %files all-modules
 
 %files filesystem
@@ -457,6 +503,10 @@ fi
 %dir %{_sysconfdir}/nginx/default.d
 %dir %{_sysconfdir}/systemd/system/nginx.service.d
 %dir %{_unitdir}/nginx.service.d
+
+# METASTORE - [
+%dir %{_sysconfdir}/nginx/vhosts.d
+# ] - METASTORE
 
 %files mod-http-geoip
 %{_datadir}/nginx/modules/mod-http-geoip.conf
@@ -487,6 +537,9 @@ fi
 
 
 %changelog
+* Sat Jul 07 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.1-2
+- Update to upstream release 1.15.1-2.
+
 * Thu Jul 05 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.1-1
 - Update to upstream release 1.15.1.
 
