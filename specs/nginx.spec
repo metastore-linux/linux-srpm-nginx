@@ -18,39 +18,44 @@
 %global with_mailcap_mimetypes 1
 %endif
 
-Name:               nginx
-Epoch:              1
-Version:            1.15.1
-Release:            2%{?dist}
-Summary:            A high performance web server and reverse proxy server
-Group:              System Environment/Daemons
+Name:                   nginx
+Epoch:                  1
+Version:                1.15.2
+Release:                1%{?dist}
+Summary:                A high performance web server and reverse proxy server
+Group:                  System Environment/Daemons
 # BSD License (two clause)
 # http://www.freebsd.org/copyright/freebsd-license.html
-License:            BSD
-URL:                https://nginx.org/
+License:                BSD
+URL:                    https://nginx.org/
 
-Source0:            https://nginx.org/download/nginx-%{version}.tar.gz
-Source10:           nginx.service
-Source11:           nginx.logrotate
-Source12:           nginx.conf
-Source13:           nginx-upgrade
-Source14:           nginx-upgrade.8
-Source100:          index.html
-Source101:          poweredby.png
-Source102:          nginx-logo.png
-Source103:          404.html
-Source104:          50x.html
-Source200:          README.dynamic
-Source210:          UPGRADE-NOTES-1.6-to-1.10
+Source0:                https://nginx.org/download/nginx-%{version}.tar.gz
+Source10:               nginx.service
+Source11:               nginx.logrotate
+Source12:               nginx.conf
+Source13:               nginx-upgrade
+Source14:               nginx-upgrade.8
+Source100:              index.html
+Source101:              poweredby.png
+Source102:              nginx-logo.png
+Source103:              404.html
+Source104:              50x.html
+Source200:              README.dynamic
+Source210:              UPGRADE-NOTES-1.6-to-1.10
+
+# METASTORE - [
 # Signature
-Source900:          https://nginx.org/download/nginx-%{version}.tar.gz.asc
+Source900:              https://nginx.org/download/nginx-%{version}.tar.gz.asc
 # Module: brotli
-Source910:          ngx_brotli.tar.gz
-Source920:          00-server.default.conf
+Source910:              ngx_brotli.tar.gz
+Source920:              00-server.default.conf
+Source921:              nginx-ssl-pass-dialog
+Source922:              nginx-ssl-gencerts
+# ] - METASTORE
 
 # removes -Werror in upstream build scripts.  -Werror conflicts with
 # -D_FORTIFY_SOURCE=2 causing warnings to turn into errors.
-Patch0:             nginx-auto-cc-gcc.patch
+Patch0:                 nginx-auto-cc-gcc.patch
 
 # Apply fix for bug in glibc libcrypt, if needed only.
 # That has been fixed some time in glibc-2.3.X and is
@@ -59,30 +64,31 @@ Patch0:             nginx-auto-cc-gcc.patch
 
 # downstream patch - changing logs permissions to 664 instead
 # previous 644
-Patch2:            nginx-1.12.1-logs-perm.patch
+Patch2:                 nginx-1.12.1-logs-perm.patch
 
+BuildRequires:          gcc
 %if 0%{?with_gperftools}
-BuildRequires:      gperftools-devel
+BuildRequires:          gperftools-devel
 %endif
-BuildRequires:      openssl-devel
-BuildRequires:      pcre-devel
-BuildRequires:      zlib-devel
-BuildRequires:      systemd
-Requires:           nginx-filesystem = %{epoch}:%{version}-%{release}
+BuildRequires:          openssl-devel
+BuildRequires:          pcre-devel
+BuildRequires:          zlib-devel
+BuildRequires:          systemd
+Requires:               nginx-filesystem = %{epoch}:%{version}-%{release}
 %if 0%{?rhel} || 0%{?fedora} < 24
 # Introduced at 1:1.10.0-1 to ease upgrade path. To be removed later.
-Requires:           nginx-all-modules = %{epoch}:%{version}-%{release}
+Requires:               nginx-all-modules = %{epoch}:%{version}-%{release}
 %endif
-Requires:           openssl
-Requires:           pcre
+Requires:               openssl
+Requires:               pcre
 %if 0%{?with_mailcap_mimetypes}
-Requires:           nginx-mimetypes
+Requires:               nginx-mimetypes
 %endif
-Requires(pre):      nginx-filesystem
-Requires(post):     systemd
-Requires(preun):    systemd
-Requires(postun):   systemd
-Provides:           webserver
+Requires(pre):          nginx-filesystem
+Requires(post):         systemd
+Requires(preun):        systemd
+Requires(postun):       systemd
+Provides:               webserver
 
 %description
 Nginx is a web server and a reverse proxy server for HTTP, SMTP, POP3 and
@@ -94,15 +100,17 @@ memory usage.
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package all-modules
-Summary:            A meta package that installs all available Nginx modules
-Group:              System Environment/Daemons
-Requires:           nginx-mod-http-geoip = %{epoch}:%{version}-%{release}
-Requires:           nginx-mod-http-image-filter = %{epoch}:%{version}-%{release}
-Requires:           nginx-mod-http-perl = %{epoch}:%{version}-%{release}
-Requires:           nginx-mod-http-xslt-filter = %{epoch}:%{version}-%{release}
-Requires:           nginx-mod-mail = %{epoch}:%{version}-%{release}
-Requires:           nginx-mod-stream = %{epoch}:%{version}-%{release}
-BuildArch:          noarch
+Summary:                A meta package that installs all available Nginx modules
+Group:                  System Environment/Daemons
+%if %{with geoip}
+Requires:               nginx-mod-http-geoip = %{epoch}:%{version}-%{release}
+%endif
+Requires:               nginx-mod-http-image-filter = %{epoch}:%{version}-%{release}
+Requires:               nginx-mod-http-perl = %{epoch}:%{version}-%{release}
+Requires:               nginx-mod-http-xslt-filter = %{epoch}:%{version}-%{release}
+Requires:               nginx-mod-mail = %{epoch}:%{version}-%{release}
+Requires:               nginx-mod-stream = %{epoch}:%{version}-%{release}
+BuildArch:              noarch
 
 %description all-modules
 %{summary}.
@@ -120,40 +128,42 @@ Fedora 24, modules are optional.
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package filesystem
-Summary:            The basic directory layout for the Nginx server
-Group:              System Environment/Daemons
-BuildArch:          noarch
-Requires(pre):      shadow-utils
+Summary:                The basic directory layout for the Nginx server
+Group:                  System Environment/Daemons
+BuildArch:              noarch
+Requires(pre):          shadow-utils
 
 %description filesystem
 The nginx-filesystem package contains the basic directory layout
 for the Nginx server including the correct permissions for the
 directories.
 
+%if %{with geoip}
 # -------------------------------------------------------------------------------------------------------------------- #
 # Package: mod-http-geoip
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-http-geoip
-Summary:            Nginx HTTP geoip module
-Group:              System Environment/Daemons
-BuildRequires:      GeoIP-devel
-Requires:           nginx
-Requires:           GeoIP
+Summary:                Nginx HTTP geoip module
+Group:                  System Environment/Daemons
+BuildRequires:          GeoIP-devel
+Requires:               nginx
+Requires:               GeoIP
 
 %description mod-http-geoip
 %{summary}.
+%endif
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Package: mod-http-image-filter
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-http-image-filter
-Summary:            Nginx HTTP image filter module
-Group:              System Environment/Daemons
-BuildRequires:      gd-devel
-Requires:           nginx
-Requires:           gd
+Summary:                Nginx HTTP image filter module
+Group:                  System Environment/Daemons
+BuildRequires:          gd-devel
+Requires:               nginx
+Requires:               gd
 
 %description mod-http-image-filter
 %{summary}.
@@ -163,15 +173,15 @@ Requires:           gd
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-http-perl
-Summary:            Nginx HTTP perl module
-Group:              System Environment/Daemons
-BuildRequires:      perl-devel
+Summary:                Nginx HTTP perl module
+Group:                  System Environment/Daemons
+BuildRequires:          perl-devel
 %if 0%{?fedora} >= 24
-BuildRequires:      perl-generators
+BuildRequires:          perl-generators
 %endif
-BuildRequires:      perl(ExtUtils::Embed)
-Requires:           nginx
-Requires:           perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+BuildRequires:          perl(ExtUtils::Embed)
+Requires:               nginx
+Requires:               perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 
 %description mod-http-perl
 %{summary}.
@@ -181,10 +191,10 @@ Requires:           perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $v
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-http-xslt-filter
-Summary:            Nginx XSLT module
-Group:              System Environment/Daemons
-BuildRequires:      libxslt-devel
-Requires:           nginx
+Summary:                Nginx XSLT module
+Group:                  System Environment/Daemons
+BuildRequires:          libxslt-devel
+Requires:               nginx
 
 %description mod-http-xslt-filter
 %{summary}.
@@ -194,9 +204,9 @@ Requires:           nginx
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-mail
-Summary:            Nginx mail modules
-Group:              System Environment/Daemons
-Requires:           nginx
+Summary:                Nginx mail modules
+Group:                  System Environment/Daemons
+Requires:               nginx
 
 %description mod-mail
 %{summary}.
@@ -206,9 +216,9 @@ Requires:           nginx
 # -------------------------------------------------------------------------------------------------------------------- #
 
 %package mod-stream
-Summary:            Nginx stream modules
-Group:              System Environment/Daemons
-Requires:           nginx
+Summary:                Nginx stream modules
+Group:                  System Environment/Daemons
+Requires:               nginx
 
 %description mod-stream
 %{summary}.
@@ -220,7 +230,7 @@ Requires:           nginx
 %prep
 %setup -q
 %patch0 -p0
-#%patch1 -p1
+#patch1 -p1
 %patch2 -p1
 cp %{SOURCE200} %{SOURCE210} %{SOURCE10} %{SOURCE12} .
 
@@ -243,7 +253,9 @@ cp %{SOURCE910} .
 # to error out.  This is is also the reason for the DESTDIR environment
 # variable.
 export DESTDIR=%{buildroot}
-./configure \
+# So the perl module finds its symbols:
+nginx_ldopts="$RPM_LD_FLAGS -Wl,-E"
+if ! ./configure \
     --prefix=%{_datadir}/nginx \
     --sbin-path=%{_sbindir}/nginx \
     --modules-path=%{_libdir}/nginx/modules \
@@ -269,7 +281,9 @@ export DESTDIR=%{buildroot}
     --with-http_addition_module \
     --with-http_xslt_module=dynamic \
     --with-http_image_filter_module=dynamic \
+%if %{with geoip}
     --with-http_geoip_module=dynamic \
+%endif
     --with-http_sub_module \
     --with-http_dav_module \
     --with-http_flv_module \
@@ -295,7 +309,11 @@ export DESTDIR=%{buildroot}
     --add-module=./ngx_brotli \
     --with-debug \
     --with-cc-opt="%{optflags} $(pcre-config --cflags)" \
-    --with-ld-opt="$RPM_LD_FLAGS -Wl,-E" # so the perl module finds its symbols
+    --with-ld-opt="$nginx_ldopts"; then
+  : configure failed
+  cat objs/autoconf.err
+  exit 1
+fi
 
 make %{?_smp_mflags}
 
@@ -360,8 +378,10 @@ for i in ftdetect indent syntax; do
         %{buildroot}%{_datadir}/vim/vimfiles/${i}/nginx.vim
 done
 
+%if %{with geoip}
 echo 'load_module "%{_libdir}/nginx/modules/ngx_http_geoip_module.so";' \
     > %{buildroot}%{_datadir}/nginx/modules/mod-http-geoip.conf
+%endif
 echo 'load_module "%{_libdir}/nginx/modules/ngx_http_image_filter_module.so";' \
     > %{buildroot}%{_datadir}/nginx/modules/mod-http-image-filter.conf
 echo 'load_module "%{_libdir}/nginx/modules/ngx_http_perl_module.so";' \
@@ -373,6 +393,17 @@ echo 'load_module "%{_libdir}/nginx/modules/ngx_mail_module.so";' \
 echo 'load_module "%{_libdir}/nginx/modules/ngx_stream_module.so";' \
     > %{buildroot}%{_datadir}/nginx/modules/mod-stream.conf
 
+# METASTORE - [
+# install nginx-ssl-pass-dialog
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}
+install -m 755 $RPM_SOURCE_DIR/nginx-ssl-pass-dialog \
+    $RPM_BUILD_ROOT%{_libexecdir}/nginx-ssl-pass-dialog
+
+# install nginx-ssl-gencerts
+install -m 755 $RPM_SOURCE_DIR/nginx-ssl-gencerts \
+    $RPM_BUILD_ROOT%{_libexecdir}/nginx-ssl-gencerts
+# ] - METASTORE
+
 %pre filesystem
 getent group %{nginx_user} > /dev/null || groupadd -r %{nginx_user}
 getent passwd %{nginx_user} > /dev/null || \
@@ -383,38 +414,12 @@ exit 0
 %post
 %systemd_post nginx.service
 
-# METASTORE - [
-%define sslcert %{_sysconfdir}/pki/nginx/localhost.crt
-%define sslkey %{_sysconfdir}/pki/nginx/localhost.key
-
-if [ -f %{sslkey} -o -f %{sslcert} ]; then
-   exit 0
-fi
-
-%{_bindir}/openssl genrsa -rand /proc/apm:/proc/cpuinfo:/proc/dma:/proc/filesystems:/proc/interrupts:/proc/ioports:/proc/pci:/proc/rtc:/proc/uptime 2048 > %{sslkey} 2> /dev/null
-
-FQDN=`hostname`
-if [ "x${FQDN}" = "x" -o ${#FQDN} -gt 59 ]; then
-   FQDN=localhost.localdomain
-fi
-
-cat << EOF | %{_bindir}/openssl req -new -key %{sslkey} \
-         -x509 -sha256 -days 365 -set_serial $RANDOM -extensions v3_req \
-         -out %{sslcert} 2>/dev/null
---
-SomeState
-SomeCity
-SomeOrganization
-SomeOrganizationalUnit
-${FQDN}
-root@${FQDN}
-EOF
-# ] - METASTORE
-
+%if %{with geoip}
 %post mod-http-geoip
 if [ $1 -eq 1 ]; then
     /usr/bin/systemctl reload nginx.service >/dev/null 2>&1 || :
 fi
+%endif
 
 %post mod-http-image-filter
 if [ $1 -eq 1 ]; then
@@ -491,6 +496,8 @@ fi
 
 # METASTORE - [
 %config(noreplace) %{_sysconfdir}/nginx/vhosts.d/00-server.default.conf
+%{_libexecdir}/nginx-ssl-pass-dialog
+%{_libexecdir}/nginx-ssl-gencerts
 # ] - METASTORE
 
 %files all-modules
@@ -508,9 +515,11 @@ fi
 %dir %{_sysconfdir}/nginx/vhosts.d
 # ] - METASTORE
 
+%if %{with geoip}
 %files mod-http-geoip
 %{_datadir}/nginx/modules/mod-http-geoip.conf
 %{_libdir}/nginx/modules/ngx_http_geoip_module.so
+%endif
 
 %files mod-http-image-filter
 %{_datadir}/nginx/modules/mod-http-image-filter.conf
@@ -537,6 +546,9 @@ fi
 
 
 %changelog
+* Wed Jul 25 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.2-1
+- Update to upstream release 1.15.2-1.
+
 * Sat Jul 07 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.1-2
 - Update to upstream release 1.15.1-2.
 
