@@ -20,8 +20,8 @@
 
 Name:                   nginx
 Epoch:                  1
-Version:                1.15.3
-Release:                2%{?dist}
+Version:                1.15.4
+Release:                1%{?dist}
 Summary:                A high performance web server and reverse proxy server
 Group:                  System Environment/Daemons
 # BSD License (two clause)
@@ -546,6 +546,9 @@ fi
 
 
 %changelog
+* Thu Sep 27 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.4-1
+- Update to upstream release 1.15.4-1.
+
 * Thu Aug 30 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.3-1
 - Update to upstream release 1.15.3-1.
 
