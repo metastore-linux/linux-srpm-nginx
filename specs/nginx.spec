@@ -1,6 +1,9 @@
 %global  _hardened_build     1
 %global  nginx_user          nginx
 
+%define brotli_dir ngx_brotli
+%define openssl_dir openssl-1.1.1
+
 # Disable strict symbol checks in the link editor.
 # See: https://src.fedoraproject.org/rpms/redhat-rpm-config/c/078af19
 %undefine _strict_symbol_defs_build
@@ -21,7 +24,7 @@
 Name:                   nginx
 Epoch:                  1
 Version:                1.15.5
-Release:                1%{?dist}
+Release:                2%{?dist}
 Summary:                A high performance web server and reverse proxy server
 Group:                  System Environment/Daemons
 # BSD License (two clause)
@@ -47,7 +50,8 @@ Source210:              UPGRADE-NOTES-1.6-to-1.10
 # Signature
 Source900:              https://nginx.org/download/nginx-%{version}.tar.gz.asc
 # Module: brotli
-Source910:              ngx_brotli.tar.gz
+Source910:              %{brotli_dir}.tar.gz
+Source911:              %{openssl_dir}.tar.gz
 Source920:              00-server.default.conf
 Source921:              nginx-ssl-pass-dialog
 Source922:              nginx-ssl-gencerts
@@ -236,16 +240,18 @@ cp %{SOURCE200} %{SOURCE210} %{SOURCE10} %{SOURCE12} .
 
 # METASTORE - [
 cp %{SOURCE920} .
+cp %{SOURCE910} %{_tmppath}
+cp %{SOURCE911} %{_tmppath}
+
+# Unpack ngx_brotli and openssl.
+%{__tar} -xzf %{_tmppath}/%{brotli_dir}.tar.gz -C %{_tmppath}
+%{__tar} -xzf %{_tmppath}/%{openssl_dir}.tar.gz -C %{_tmppath}
 # ] - METASTORE
 
 %if 0%{?rhel} > 0 && 0%{?rhel} < 8
 sed -i -e 's#KillMode=.*#KillMode=process#g' nginx.service
 sed -i -e 's#PROFILE=SYSTEM#HIGH:!aNULL:!MD5#' nginx.conf
 %endif
-
-# Unpack ngx_brotli module.
-cp %{SOURCE910} .
-%{__tar} -xzf %{SOURCE910}
 
 %build
 # nginx does not utilize a standard configure script.  It has its own
@@ -306,7 +312,8 @@ if ! ./configure \
 %if 0%{?with_gperftools}
     --with-google_perftools_module \
 %endif
-    --add-module=./ngx_brotli \
+    --add-module=%{_tmppath}/%{brotli_dir} \
+    --with-openssl=%{_tmppath}/%{openssl_dir} \
     --with-debug \
     --with-cc-opt="%{optflags} $(pcre-config --cflags)" \
     --with-ld-opt="$nginx_ldopts"; then
@@ -316,7 +323,6 @@ if ! ./configure \
 fi
 
 make %{?_smp_mflags}
-
 
 %install
 make install DESTDIR=%{buildroot} INSTALLDIRS=vendor
@@ -546,6 +552,10 @@ fi
 
 
 %changelog
+* Mon Oct 29 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.5-2
+- Update ngx_brotli module.
+- Build with OpenSSL v1.1.1.
+
 * Sun Oct 28 2018 Kitsune Solar <kitsune.solar@gmail.com> - 1:1.15.5-1
 - Update to upstream release 1.15.5-1.
 
