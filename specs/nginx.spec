@@ -1,8 +1,10 @@
 %global  _hardened_build     1
 %global  nginx_user          nginx
 
+# METASTORE - [
 %define brotli_dir ngx_brotli
 %define openssl_dir openssl-1.1.1
+# ] - METASTORE
 
 # Disable strict symbol checks in the link editor.
 # See: https://src.fedoraproject.org/rpms/redhat-rpm-config/c/078af19
@@ -49,10 +51,13 @@ Source210:              UPGRADE-NOTES-1.6-to-1.10
 # METASTORE - [
 # Signature
 Source900:              https://nginx.org/download/nginx-%{version}.tar.gz.asc
-# Module: brotli
+# Brotli
 Source910:              %{brotli_dir}.tar.gz
+# OpenSSL
 Source911:              %{openssl_dir}.tar.gz
+# Zero server config
 Source920:              00-server.default.conf
+# SSL generator
 Source921:              nginx-ssl-pass-dialog
 Source922:              nginx-ssl-gencerts
 # ] - METASTORE
