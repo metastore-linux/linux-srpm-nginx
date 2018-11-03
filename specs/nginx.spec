@@ -245,11 +245,13 @@ cp %{SOURCE200} %{SOURCE210} %{SOURCE10} %{SOURCE12} .
 
 # METASTORE - [
 cp %{SOURCE920} .
-cp %{SOURCE910} %{_tmppath}
-cp %{SOURCE911} %{_tmppath}
 
-# Unpack ngx_brotli and OpenSSL.
+# Copy and unpack ngx_brotli.
+cp %{SOURCE910} %{_tmppath}
 %{__tar} -xzf %{_tmppath}/%{brotli_dir}.tar.gz -C %{_tmppath}
+
+# Copy and unpack OpenSSL.
+cp %{SOURCE911} %{_tmppath}
 %{__tar} -xzf %{_tmppath}/%{openssl_dir}.tar.gz -C %{_tmppath}
 # ] - METASTORE
 
